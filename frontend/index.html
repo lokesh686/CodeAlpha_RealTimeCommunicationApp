@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MeetAlpha — Video Conferencing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen">
+    <div class="auth-wrap">
+      <div class="auth-hero">
+        <h1>MeetAlpha</h1>
+        <p>HD Video Calls · Screen Sharing · Whiteboard · File Sharing</p>
+        <div class="feature-pills">
+          <span>🎥 Multi-user Video</span>
+          <span>🖥 Screen Share</span>
+          <span>🎨 Whiteboard</span>
+          <span>📁 File Share</span>
+          <span>🔒 Encrypted</span>
+        </div>
+      </div>
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button class="atab active" onclick="switchAuthTab('login')">Login</button>
+          <button class="atab" onclick="switchAuthTab('register')">Register</button>
+        </div>
+        <div id="atab-login" class="atab-content active">
+          <input type="email" id="a-email" placeholder="Email"/>
+          <input type="password" id="a-password" placeholder="Password"/>
+          <div class="amsg" id="a-msg"></div>
+          <button class="btn-primary" onclick="authLogin()">Sign In</button>
+        </div>
+        <div id="atab-register" class="atab-content">
+          <input type="text" id="r-name" placeholder="Full Name"/>
+          <input type="email" id="r-email" placeholder="Email"/>
+          <input type="password" id="r-password" placeholder="Password"/>
+          <div class="amsg" id="r-msg"></div>
+          <button class="btn-primary" onclick="authRegister()">Create Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOBBY -->
+  <div id="lobby" style="display:none">
+    <header class="lobby-header">
+      <div class="logo">MeetAlpha</div>
+      <div class="lobby-user" id="lobby-user"></div>
+      <button class="btn-ghost" onclick="authLogout()">Logout</button>
+    </header>
+    <main class="lobby-main">
+      <!-- Create Room -->
+      <div class="lobby-card">
+        <h2>🎥 Start a Meeting</h2>
+        <input type="text" id="room-name" placeholder="Meeting name"/>
+        <input type="password" id="room-password" placeholder="Password (optional)"/>
+        <button class="btn-primary" onclick="createRoom()">Create Room</button>
+      </div>
+      <!-- Join Room -->
+      <div class="lobby-card">
+        <h2>🔗 Join a Meeting</h2>
+        <input type="text" id="join-code" placeholder="Room code (e.g. A1B2C3D4)" style="text-transform:uppercase"/>
+        <input type="password" id="join-password" placeholder="Password (if required)"/>
+        <button class="btn-secondary" onclick="joinRoomByCode()">Join Room</button>
+      </div>
+      <!-- Public rooms -->
+      <div class="lobby-card full-width">
+        <h2>🌐 Open Rooms</h2>
+        <div id="public-rooms"><div class="loading">Loading rooms...</div></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MEETING ROOM -->
+  <div id="meeting-room" style="display:none">
+    <!-- Top bar -->
+    <div class="meeting-topbar">
+      <div class="meeting-info">
+        <span class="meeting-logo">MeetAlpha</span>
+        <span class="room-badge" id="room-badge"></span>
+      </div>
+      <div class="meeting-timer" id="meeting-timer">00:00</div>
+      <div class="topbar-actions">
+        <button class="icon-btn" onclick="togglePanel('chat')" title="Chat">💬</button>
+        <button class="icon-btn" onclick="togglePanel('participants')" title="Participants">👥</button>
+        <button class="icon-btn" onclick="togglePanel('files')" title="Files">📁</button>
+        <button class="icon-btn danger" onclick="leaveRoom()" title="Leave">📴 Leave</button>
+      </div>
+    </div>
+
+    <!-- Main layout -->
+    <div class="meeting-layout">
+      <!-- Video area + Whiteboard -->
+      <div class="media-area">
+        <!-- Tab switcher -->
+        <div class="media-tabs">
+          <button class="mtab active" onclick="switchMediaTab('videos')" id="mtab-videos">Videos</button>
+          <button class="mtab" onclick="switchMediaTab('whiteboard')" id="mtab-whiteboard">🎨 Whiteboard</button>
+        </div>
+
+        <!-- Video grid -->
+        <div id="media-videos" class="video-grid" style="display:flex">
+          <div class="video-tile local-tile" id="local-tile">
+            <video id="local-video" autoplay muted playsinline></video>
+            <div class="video-label" id="local-label">You</div>
+            <div class="video-status" id="local-status"></div>
+          </div>
+        </div>
+
+        <!-- Whiteboard -->
+        <div id="media-whiteboard" style="display:none;flex-direction:column;height:100%">
+          <div class="wb-toolbar">
+            <div class="wb-tools">
+              <button class="wb-btn active" id="tool-pen" onclick="setWbTool('pen')">✏️ Pen</button>
+              <button class="wb-btn" id="tool-line" onclick="setWbTool('line')">📏 Line</button>
+              <button class="wb-btn" id="tool-rect" onclick="setWbTool('rect')">▭ Rect</button>
+              <button class="wb-btn" id="tool-circle" onclick="setWbTool('circle')">⭕ Circle</button>
+              <button class="wb-btn" id="tool-text" onclick="setWbTool('text')">T Text</button>
+              <button class="wb-btn" id="tool-eraser" onclick="setWbTool('eraser')">🧹 Eraser</button>
+            </div>
+            <div class="wb-options">
+              <input type="color" id="wb-color" value="#ffffff" title="Color" onchange="wbColor=this.value"/>
+              <input type="range" id="wb-size" min="1" max="30" value="3" title="Size" onchange="wbSize=+this.value"/>
+              <button class="wb-btn danger" onclick="clearWhiteboard()">🗑 Clear All</button>
+            </div>
+          </div>
+          <canvas id="whiteboard-canvas"></canvas>
+        </div>
+
+        <!-- Controls bar -->
+        <div class="controls-bar">
+          <button class="ctrl-btn" id="btn-mic" onclick="toggleMic()" title="Microphone">🎙 Mic</button>
+          <button class="ctrl-btn" id="btn-cam" onclick="toggleCam()" title="Camera">📷 Cam</button>
+          <button class="ctrl-btn" id="btn-screen" onclick="toggleScreenShare()" title="Screen Share">🖥 Share</button>
+          <button class="ctrl-btn danger" onclick="leaveRoom()">📴 Leave</button>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="side-panel" id="side-panel">
+        <!-- Participants -->
+        <div class="panel-section active" id="panel-participants">
+          <div class="panel-header">👥 Participants <span id="participant-count">1</span></div>
+          <div id="participant-list" class="participant-list"></div>
+        </div>
+        <!-- Chat -->
+        <div class="panel-section" id="panel-chat">
+          <div class="panel-header">💬 Chat</div>
+          <div id="chat-messages" class="chat-messages"></div>
+          <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Message..." onkeydown="if(event.key==='Enter')sendChat()"/>
+            <button onclick="sendChat()">Send</button>
+          </div>
+        </div>
+        <!-- Files -->
+        <div class="panel-section" id="panel-files">
+          <div class="panel-header">📁 Shared Files</div>
+          <label class="file-upload-btn">
+            📤 Upload File
+            <input type="file" id="file-input" style="display:none" onchange="uploadFile()"/>
+          </label>
+          <div id="files-list" class="files-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Socket.io client -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
